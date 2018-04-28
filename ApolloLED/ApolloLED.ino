@@ -28,6 +28,9 @@ void loop() {
 	delay(5);
 }
 
+//hatte so kein bock
+//das ist ein test
+
 
 // rainbow color 
 void rainbowWheel()
