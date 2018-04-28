@@ -25,8 +25,10 @@ void loop() {
 
 	//test
 	rainbowWheel();
-	delay(50);
+	delay(5);
 }
+
+//hatte so kein bock
 
 
 // rainbow color 
