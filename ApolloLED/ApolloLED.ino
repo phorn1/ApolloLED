@@ -23,13 +23,9 @@ void setup() {
 // the loop function runs over and over again until power down or reset
 void loop() {
 
-	//test test
 	rainbowWheel();
 	delay(5);
 }
-
-//hatte so kein bock
-//das ist ein test
 
 
 // rainbow color 
