@@ -21,5 +21,8 @@
     <ClInclude Include="__vm\.ApolloLED.vsarduino.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="D:\Eigene Daten\Downloads\FastLED-master (1)\FastLED-master\FastLED.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

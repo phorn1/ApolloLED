@@ -4,7 +4,7 @@
  Author:	piush
 */
 
-#include "FastLED-3.1.8\FastLED.h"
+#include "FastLED\FastLED.h"
 
 #define NUM_LEDS	31
 #define DATA_PIN	9
@@ -16,7 +16,7 @@ CRGB leds[NUM_LEDS];
 void setup() {
 	Serial.begin(9600);
 	FastLED.addLeds<WS2812B, DATA_PIN, GRB>(leds, NUM_LEDS);
-	fill_solid(leds, NUM_LEDS, CRGB::Black);
+	fill_solid(leds, NUM_LEDS, CRGB::White);
 	FastLED.show();
 }
 
