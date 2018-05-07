@@ -37,7 +37,6 @@ void rainbowWheel()
 
 	for (uint8_t i = 0; i < NUM_LEDS; i++) { // Set Leds
 		wheel(((i * 256 / NUM_LEDS) + k) % 256, 1, &color);
-
 		leds[i] = color;
 	}
 	k++;
@@ -56,6 +55,13 @@ void rainbowAll() {
 
 	j++;
 	FastLED.show();
+}
+
+//
+void singlecolor(struct CRGB* color){
+	color->r = 255;
+	color->g = 0;
+	color->b = 0;
 }
 
 // calculates Color
