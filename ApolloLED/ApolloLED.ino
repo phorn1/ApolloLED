@@ -100,4 +100,6 @@ void rainbowAll() {
 
 void singlecolor(struct CRGB* color) {
 	color-> r = 0;
+	color-> g = 255;
+	color-> b = 0;
 }
