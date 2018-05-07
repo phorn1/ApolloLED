@@ -99,5 +99,6 @@ void rainbowAll() {
 }
 
 void singlecolor(struct CRGB* color) {
-	color-> r = 0;
+	color->r = 0;
+	color->b = 23;
 }
