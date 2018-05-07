@@ -97,3 +97,7 @@ void rainbowAll() {
 	j++;
 	FastLED.show();
 }
+
+void singlecolor() {
+
+}
