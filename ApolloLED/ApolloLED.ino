@@ -41,6 +41,7 @@ void setup() {
 }
 
 // the loop function runs over and over again until power down or reset
+//TODO
 void loop() {
 	if (btInterrupt)
 	{
@@ -63,6 +64,7 @@ void loop() {
 			changeMode(&currentMessage);
 			config(&currentMessage);
 		}
+		btFlag = false;
 	}
 	else
 	{
