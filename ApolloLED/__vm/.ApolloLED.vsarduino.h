@@ -15,7 +15,7 @@
 #define __AVR_ATmega328p__
 #define __AVR_ATmega328P__
 #define F_CPU 16000000L
-#define ARDUINO 10805
+#define ARDUINO 10804
 #define ARDUINO_AVR_NANO
 #define ARDUINO_ARCH_AVR
 #define __cplusplus 201103L
@@ -26,6 +26,9 @@
 #define __inline__
 #define __volatile__
 #define GCC_VERSION 40902
+
+#define __cplusplus 201103L
+#undef __cplusplus
 #define __cplusplus 201103L
 
 #define volatile(va_arg) 
@@ -59,15 +62,13 @@ typedef void *__builtin_va_list;
 
 
 
-#include <arduino.h>
+#include <Arduino.h>
 #include <pins_arduino.h> 
-//#undef F
-//#define F(string_literal) ((const PROGMEM char *)(string_literal))
+#undef F
+#define F(string_literal) ((const PROGMEM char *)(string_literal))
 #undef PSTR
 #define PSTR(string_literal) ((const PROGMEM char *)(string_literal))
 
-//typedef unsigned char uint8_t;
-//typedef unsigned int uint8_t;
 
 #define pgm_read_byte(address_short) uint8_t() 
 #define pgm_read_word(address_short) uint16_t() 
