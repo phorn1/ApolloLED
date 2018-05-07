@@ -5,28 +5,62 @@
 */
 
 #include "FastLED\FastLED.h"
+#include "ledBaseFunc.h"
 
-#define NUM_LEDS	31
-#define DATA_PIN	9
 
 CRGB leds[NUM_LEDS];
+uint8_t volume = 5;
 
 
 // the setup function runs once when you press reset or power the board
 void setup() {
 	Serial.begin(9600);
 	FastLED.addLeds<WS2812B, DATA_PIN, GRB>(leds, NUM_LEDS);
-	fill_solid(leds, NUM_LEDS, CRGB::White);
+	fill_solid(leds, NUM_LEDS, CRGB::Black);
+	FastLED.setBrightness(50);
 	FastLED.show();
 }
 
 // the loop function runs over and over again until power down or reset
 void loop() {
 
-	rainbowWheel();
+	musicAnimation();
 	delay(5);
 }
 
+
+// class test
+//
+void musicAnimation()
+{
+	CRGB color = 0x00;
+	uint8_t data[4] = { 1, 2, 3, 5 }; // current loudness
+	processAudio(data); // calculate audio data
+	uint8_t peak = ((data[0] + data[1] + data[2] + data[3]) / 4);
+
+	if (peak > volume) {
+		
+		uint8_t val = (peak * 15 / volume);
+		Serial.println(val);
+		if (val > NUM_LEDS)
+		{
+			val = NUM_LEDS;
+		}
+
+		for (int i = 0; i < val; i++)
+		{
+			wheel(i, 1, &color);
+			leds[i] = color;
+		}
+	}
+
+	for (int i = 0; i < NUM_LEDS; i++)
+	{
+		leds[i].fadeToBlackBy((i) + 10);
+	}
+	
+	FastLED.show();
+}
 
 // rainbow color 
 void rainbowWheel()
@@ -56,28 +90,4 @@ void rainbowAll() {
 
 	j++;
 	FastLED.show();
-}
-
-// calculates Color
-void wheel(uint8_t WheelPos, uint8_t Dim, struct CRGB* color) {
-	if (WheelPos < 85) {
-		//*color = (uint32_t)(0 << 16) | (uint32_t)((WheelPos * 3 / Dim) << 8) | ((255 - WheelPos * 3) / Dim);
-		color->r = 0;
-		color->g = WheelPos * 3 / Dim;
-		color->b = (255 - WheelPos * 3) / Dim;
-	}
-	else if (WheelPos < 170) {
-		WheelPos -= 85;
-		//*color = (uint32_t)((WheelPos * 3 / Dim) << 16)| (uint32_t)(((255 - WheelPos * 3) / Dim) << 8) | 0;
-		color->r = WheelPos * 3 / Dim;
-		color->g = (255 - WheelPos * 3) / Dim;
-		color->b = 0;
-	}
-	else {
-		WheelPos -= 170;
-		//*color = (uint32_t)(((255 - WheelPos * 3) / Dim) << 16) | (uint32_t)(0 << 8) | (WheelPos * 3 / Dim);
-		color->r = (255 - WheelPos * 3) / Dim;
-		color->g = 0;
-		color->b = WheelPos * 3 / Dim;
-	}
 }
