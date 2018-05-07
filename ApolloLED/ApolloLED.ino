@@ -11,6 +11,12 @@
 CRGB leds[NUM_LEDS];
 uint8_t volume = 5;
 
+struct message {
+	uint8_t mode;
+	CRGB color;
+	uint8_t brightness;
+	uint8_t volume;
+};
 
 // the setup function runs once when you press reset or power the board
 void setup() {
