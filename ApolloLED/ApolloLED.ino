@@ -98,6 +98,8 @@ void rainbowAll() {
 	FastLED.show();
 }
 
-void singlecolor() {
-
+void singlecolor(struct CRGB* color) {
+	color-> r = 0;
+	color-> g = 0;
+	color-> b = 0;
 }
