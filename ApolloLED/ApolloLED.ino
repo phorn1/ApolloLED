@@ -17,7 +17,7 @@ void setup() {
 	Serial.begin(9600);
 	FastLED.addLeds<WS2812B, DATA_PIN, GRB>(leds, NUM_LEDS);
 	fill_solid(leds, NUM_LEDS, CRGB::Black);
-	FastLED.setBrightness(50);
+	FastLED.setBrightness(255);
 	FastLED.show();
 }
 
@@ -37,10 +37,12 @@ void musicAnimation()
 	uint8_t data[4] = { 1, 2, 3, 5 }; // current loudness
 	processAudio(data); // calculate audio data
 	uint8_t peak = ((data[0] + data[1] + data[2] + data[3]) / 4);
+	static uint8_t val = 1;
+	static uint8_t wheelPos = 1;
 
 	if (peak > volume) {
 		
-		uint8_t val = (peak * 15 / volume);
+		val = (peak * 15 / volume);
 		Serial.println(val);
 		if (val > NUM_LEDS)
 		{
@@ -49,16 +51,20 @@ void musicAnimation()
 
 		for (int i = 0; i < val; i++)
 		{
-			wheel(i, 1, &color);
+			wheel(wheelPos + (i*5), 1, &color);
 			leds[i] = color;
 		}
 	}
 
-	for (int i = 0; i < NUM_LEDS; i++)
+	for (uint8_t i = 0; i < val; i++)
 	{
-		leds[i].fadeToBlackBy((i) + 10);
+		leds[i].fadeToBlackBy((i/2) + 10);
 	}
-	
+	for (uint8_t i = val; i < NUM_LEDS; i++)
+	{
+		leds[i].fadeToBlackBy(50);
+	}
+	wheelPos++;
 	FastLED.show();
 }
 
