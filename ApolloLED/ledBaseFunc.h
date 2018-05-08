@@ -6,7 +6,8 @@
 #define NUM_LEDS	31
 #define DATA_PIN	9
 #define MIC_PIN		A0
-#define RECV_PIN    0
+#define ASCII	    48
+
 
 #define N_WAVE	256    /* full length of Sinewave[] */
 #define LOG2_N_WAVE 8	/* log2(N_WAVE) */
