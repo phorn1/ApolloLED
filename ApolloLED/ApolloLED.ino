@@ -39,6 +39,9 @@ void setup() {
 	fill_solid(leds, NUM_LEDS, CRGB::Black);
 	FastLED.setBrightness(255);
 
+	//Microphone
+	pinMode(MIC_PIN, INPUT);
+
 	FastLED.show();
 }
 
@@ -48,14 +51,8 @@ void loop() {
 	{
 		// BT Input until reading '\n'
 		char msgBuf[20];
-		BTSerial.readBytesUntil('\n', msgBuf, 20);
-
-		// correcting ASCII Value of message
-		for (int i = 1; i < 20; i++)
-		{
-			msgBuf[i] -= ASCII;
-		}
-
+		BTSerial.readBytesUntil( 255, msgBuf, 20);
+		Serial.println("1");
 		processMessage(msgBuf);
 	}
 	// calling animation depending on mode value
@@ -63,9 +60,11 @@ void loop() {
 	{
 	case rainbow_Wheel:
 		rainbowWheel();
+		//Serial.println("1");
 		break;
 	case equalizer_M:
 		equalizerM();
+		//Serial.println("2");
 		break;
 	default:
 		break;
@@ -88,9 +87,9 @@ void processMessage(char* msgBuf)
 	{
 		Serial.println("A");
 		mode = single_Color;
-		uint8_t r = msgBuf[1] * 100 + msgBuf[2] * 10 + msgBuf[3];
-		uint8_t g = msgBuf[4] * 100 + msgBuf[5] * 10 + msgBuf[6];
-		uint8_t b = msgBuf[7] * 100 + msgBuf[8] * 10 + msgBuf[9];
+		uint8_t r = msgBuf[1];
+		uint8_t g = msgBuf[2];
+		uint8_t b = msgBuf[3];
 		singlecolor(r, g, b);
 	}
 	// B: Change Animation Mode
@@ -99,7 +98,7 @@ void processMessage(char* msgBuf)
 	else if (funcID == 'B')
 	{
 		Serial.println("B");
-		mode = static_cast<animMode>(msgBuf[1] * 10 + msgBuf[2]);
+		mode = (animMode) msgBuf[1];
 		Serial.println(mode);
 	}
 	// C: Config Message, will change settings depending on configID
@@ -108,8 +107,8 @@ void processMessage(char* msgBuf)
 	else if (funcID == 'C')
 	{
 		Serial.println("C");
-		uint8_t configID = msgBuf[1] * 10 + msgBuf[2];
-		uint8_t value = msgBuf[3] * 100 + msgBuf[4] * 10 + msgBuf[5];
+		uint8_t configID = msgBuf[1];
+		uint8_t value = msgBuf[2];
 		// config brightness of strip
 		if (configID == ebrightness)
 		{
@@ -125,6 +124,7 @@ void processMessage(char* msgBuf)
 		else if (configID == evolume)
 		{
 			volume = value;
+			Serial.println(volume);
 		}
 		FastLED.show();
 	}
@@ -155,10 +155,10 @@ void equalizerM()
 	static uint8_t val = 1;
 	static uint8_t wheelPos = 1;
 
-	if (peak > volume) {
-		
-		val = (peak * 15 / volume);
-		//Serial.println(val);
+	if ((data[0] > volume) && (data[1] > volume) && (data[2] > volume) && (data[3] > volume))
+	{
+		val = (peak - volume) * 2;
+		Serial.println(val);
 		if (val > NUM_LEDS)
 		{
 			val = NUM_LEDS;
