@@ -1,4 +1,6 @@
 #include "ledBaseFunc.h"
+
+
 // calculates Color
 void wheel(uint8_t WheelPos, uint8_t Dim, struct CRGB* color) {
 	if (WheelPos < 85) {

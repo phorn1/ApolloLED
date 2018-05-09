@@ -3,7 +3,6 @@
 // basic led functions
 //
 #define FFT_SIZE	128
-#define NUM_LEDS	31
 #define DATA_PIN	9
 #define MIC_PIN		A0
 #define ASCII	    48
@@ -19,6 +18,7 @@ void wheel(uint8_t WheelPos, uint8_t Dim, struct CRGB* color);
 
 // Get Audio data and start FFT
 void processAudio(uint8_t data[]);
+
 
 
 // Do FFT

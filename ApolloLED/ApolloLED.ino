@@ -18,12 +18,25 @@ enum animMode
 	single_Color, rainbow_Wheel, equalizer_M
 };
 
-enum configID
+enum configMsgID
 {
 	ebrightness, espeed, evolume
 };
 
-CRGB leds[NUM_LEDS];
+enum infoMsgType
+{
+	connect, disconnect, save
+};
+
+enum msgType
+{
+	info_Msg, singleColor_Msg, changeMode_Msg, config_Msg
+};
+
+
+uint8_t const numLeds = 31;
+CRGB leds[31];
+uint8_t msgLength[] = {1, 3, 1, 2, 0};	// length of message type, number of passed arguments
 uint8_t volume = 5;
 uint8_t brightness = 255;
 uint8_t speed = 50;
@@ -35,8 +48,8 @@ animMode mode = single_Color;
 void setup() {
 	Serial.begin(9600);
 	BTSerial.begin(9600);
-	FastLED.addLeds<WS2812B, DATA_PIN, GRB>(leds, NUM_LEDS);
-	fill_solid(leds, NUM_LEDS, CRGB::Black);
+	FastLED.addLeds<WS2812B, DATA_PIN, GRB>(leds, numLeds);
+	fill_solid(leds, numLeds, CRGB::Black);
 	FastLED.setBrightness(255);
 
 	//Microphone
@@ -49,22 +62,26 @@ void setup() {
 void loop() {
 	if (BTSerial.available())
 	{
-		// BT Input until reading '\n'
-		char msgBuf[20];
-		BTSerial.readBytesUntil( 255, msgBuf, 20);
-		Serial.println("1");
-		processMessage(msgBuf);
+		// BT Input
+		uint8_t typeID;
+		BTSerial.readBytes(&typeID, 1);
+		Serial.println((uint8_t)typeID);
+		uint8_t msgBuf[10];
+		BTSerial.readBytes(msgBuf, msgLength[typeID]);
+		/*for (int i = 0; i < 10; i++)
+		{
+			Serial.println((uint8_t)msgBuf[i]);
+		}*/
+		processMessage(typeID, msgBuf);
 	}
 	// calling animation depending on mode value
 	switch (mode)
 	{
 	case rainbow_Wheel:
 		rainbowWheel();
-		//Serial.println("1");
 		break;
 	case equalizer_M:
 		equalizerM();
-		//Serial.println("2");
 		break;
 	default:
 		break;
@@ -72,43 +89,61 @@ void loop() {
 }
 
 
-void processMessage(char* msgBuf)
+void processMessage(uint8_t typeID, uint8_t* msgBuf)
 {
-	// extracting function ID
-	char funcID = msgBuf[0];
-
 	// switching which function is called
 	// see protokoll definition for more informations
 	//
-	// A: Single Color
-	//       ID|  r  |  g  |  b  | 
-	// msg: "A | 255 | 255 | 255 | \n"
-	if (funcID == 'A')
+	// 0: Info Message
+	//       ID| type|
+	// msg:  0 | 255 |
+	if (typeID == info_Msg)
 	{
-		Serial.println("A");
+		Serial.println("Info-Msg");
+		uint8_t type = msgBuf[0];
+
+		if (type == connect)
+		{
+			connectAnim(connect);
+		}
+		else if (type == disconnect)
+		{
+			connectAnim(disconnect);
+		}
+		else if (type == save)
+		{
+			connectAnim(save);
+		}
+	}
+	// 1: Single Color
+	//       ID|  r  |  g  |  b  | 
+	// msg:  1 | 255 | 255 | 255 | 
+	else if (typeID == singleColor_Msg)
+	{
+		Serial.println("SingleColor-Msg");
 		mode = single_Color;
-		uint8_t r = msgBuf[1];
-		uint8_t g = msgBuf[2];
-		uint8_t b = msgBuf[3];
+		uint8_t r = msgBuf[0];
+		uint8_t g = msgBuf[1];
+		uint8_t b = msgBuf[2];
 		singlecolor(r, g, b);
 	}
-	// B: Change Animation Mode
+	// 2: Change Animation Mode
 	//       ID|mode|
-	// msg: "B | 99 | \n"
-	else if (funcID == 'B')
+	// msg: 2 | 99 |
+	else if (typeID == changeMode_Msg)
 	{
-		Serial.println("B");
-		mode = (animMode) msgBuf[1];
+		Serial.println("ChangeMode-Msg");
+		mode = (animMode) msgBuf[0];
 		Serial.println(mode);
 	}
-	// C: Config Message, will change settings depending on configID
+	// 3: Config Message, will change settings depending on configID
 	//       ID|configID| value |
-	// msg: "C |   99   |  255  | \n"
-	else if (funcID == 'C')
+	// msg: 3 |   99   |  255  | 
+	else if (typeID == config_Msg)
 	{
-		Serial.println("C");
-		uint8_t configID = msgBuf[1];
-		uint8_t value = msgBuf[2];
+		Serial.println("Config-Msg");
+		uint8_t configID = msgBuf[0];
+		uint8_t value = msgBuf[1];
 		// config brightness of strip
 		if (configID == ebrightness)
 		{
@@ -128,20 +163,47 @@ void processMessage(char* msgBuf)
 		}
 		FastLED.show();
 	}
-	// D:
-	//TODO
-
-	// S: Message to save current settings on controller EEPROM
-	//       ID|
-	// msg: "S | \n"
-	else if (funcID == 'S')
-	{
-		//EEPROM Saving Data
-		//TODO
-	}
 }
 
-
+void connectAnim(uint8_t type)
+{
+	// falls leds durch zwei teilbar und rest, dann setze die mittlere led
+	if (numLeds % 2)
+	{
+		if (type == connect)
+		{
+			leds[(numLeds / 2)] = CRGB::Blue;
+		}
+		else if (type == disconnect)
+		{
+			leds[(numLeds / 2)] = CRGB::Red;
+		}
+		else if (type == save)
+		{
+			leds[(numLeds / 2)] = CRGB::Violet;
+		}
+	}
+	// falls kein rest dann setze die mittleren beiden leds
+	else
+	{
+		if (type == connect)
+		{
+			leds[(numLeds / 2)] = CRGB::Blue;
+			leds[(numLeds / 2) - 1] = CRGB::Blue;
+		}
+		else if (type == disconnect)
+		{
+			leds[(numLeds / 2)] = CRGB::Red;
+			leds[(numLeds / 2) -1] = CRGB::Red;
+		}
+		else if (type == save)
+		{
+			leds[(numLeds / 2)] = CRGB::Violet;
+			leds[(numLeds / 2) - 1] = CRGB::Violet;
+		}
+	}
+	fadeFromMiddle();
+}
 
 
 // class test
@@ -159,9 +221,9 @@ void equalizerM()
 	{
 		val = (peak - volume) * 2;
 		Serial.println(val);
-		if (val > NUM_LEDS)
+		if (val > numLeds)
 		{
-			val = NUM_LEDS;
+			val = numLeds;
 		}
 
 		for (int i = 0; i < val; i++)
@@ -175,7 +237,7 @@ void equalizerM()
 	{
 		leds[i].fadeToBlackBy((i/2) + 10);
 	}
-	for (uint8_t i = val; i < NUM_LEDS; i++)
+	for (uint8_t i = val; i < numLeds; i++)
 	{
 		leds[i].fadeToBlackBy(50);
 	}
@@ -190,8 +252,8 @@ void rainbowWheel()
 
 	static uint8_t k = 0; // WheelPosition
 
-	for (uint8_t i = 0; i < NUM_LEDS; i++) { // Set Leds
-		wheel(((i * 256 / NUM_LEDS) + k) % 256, 1, &color);
+	for (uint8_t i = 0; i < numLeds; i++) { // Set Leds
+		wheel(((i * 256 / numLeds) + k) % 256, 1, &color);
 
 		leds[i] = color;
 	}
@@ -202,11 +264,32 @@ void rainbowWheel()
 
 void singlecolor(uint8_t r, uint8_t g, uint8_t b)
 {
-	for (uint8_t i = 0; i < NUM_LEDS; i++)
+	for (uint8_t i = 0; i < numLeds; i++)
 	{
 		leds[i].r = r;
 		leds[i].g = g;
 		leds[i].b = b;
 	}
 	FastLED.show();
+}
+
+void fadeFromMiddle()
+{
+	for (uint8_t i = 0; i < numLeds*3; i++)
+	{
+		for (uint8_t j = numLeds; j >(numLeds / 2); j--)
+		{
+			leds[j] = leds[j - 1];
+		}
+		for (uint8_t j = 0; j < (numLeds / 2); j++)
+		{
+			leds[j] = leds[j + 1];
+		}
+		for (uint8_t j = 0; j < numLeds; j++)
+		{
+			leds[j].fadeToBlackBy(15);
+		}
+		FastLED.show();
+		delay(15);
+	}
 }
