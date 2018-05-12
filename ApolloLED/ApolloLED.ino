@@ -6,12 +6,13 @@
 
 //#include "../external/SoftwareSerial/SoftwareSerial.h"
 #include "FastLED/FastLED.h"
+#include "AltSoftSerial.h"
 #include "ledBaseFunc.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
-SoftwareSerial BTSerial(10, 12); // RX | TX
+AltSoftSerial BTSerial(10, 12); // RX | TX
 
 enum animMode
 {
@@ -50,7 +51,7 @@ void setup() {
 	BTSerial.begin(9600);
 	FastLED.addLeds<WS2812B, DATA_PIN, GRB>(leds, numLeds);
 	fill_solid(leds, numLeds, CRGB::Black);
-	FastLED.setBrightness(255);
+	FastLED.setBrightness(brightness);
 
 	//Microphone
 	pinMode(MIC_PIN, INPUT);
@@ -60,6 +61,7 @@ void setup() {
 
 // the loop function runs over and over again until power down or reset
 void loop() {
+	
 	if (BTSerial.available())
 	{
 		// BT Input
@@ -86,6 +88,7 @@ void loop() {
 	default:
 		break;
 	}
+	
 }
 
 
