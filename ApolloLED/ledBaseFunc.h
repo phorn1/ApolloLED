@@ -1,4 +1,4 @@
-#include "FastLED\FastLED.h"
+#include "FastLED/FastLED.h"
 #pragma once
 // basic led functions
 //
