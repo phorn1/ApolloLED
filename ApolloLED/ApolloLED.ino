@@ -11,7 +11,7 @@
 #include <stdio.h>
 #include <string.h>
 
-SoftwareSerial BTSerial(10, 11); // RX | TX
+SoftwareSerial BTSerial(10, 12); // RX | TX
 
 enum animMode
 {
