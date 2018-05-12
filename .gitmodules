@@ -1,0 +1,3 @@
+[submodule "external/SoftwareSerial"]
+	path = external/SoftwareSerial
+	url = git://github.com/PaulStoffregen/SoftwareSerial.git
