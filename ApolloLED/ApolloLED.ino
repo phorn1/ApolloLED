@@ -11,7 +11,7 @@
 #include <stdio.h>
 #include <string.h>
 
-SoftwareSerial BTSerial(10, 12); // RX | TX
+SoftwareSerial BTSerial(10, 11); // RX | TX
 
 enum animMode
 {
@@ -277,7 +277,7 @@ void fadeFromMiddle()
 {
 	for (uint8_t i = 0; i < numLeds*3; i++)
 	{
-		for (uint8_t j = numLeds; j >(numLeds / 2); j--)
+		for (uint8_t j = numLeds; j > (numLeds / 2); j--)
 		{
 			leds[j] = leds[j - 1];
 		}
