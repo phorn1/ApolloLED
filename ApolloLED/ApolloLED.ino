@@ -4,14 +4,14 @@
  Author:	piush
 */
 
-#include "FastLED\FastLED.h"
-#include "SoftwareSerial-master\SoftwareSerial.h"
+#include "../external/FastLED/FastLED.h"
+#include "../external/SoftwareSerial/SoftwareSerial.h"
 #include "ledBaseFunc.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
-SoftwareSerial BTSerial(10, 11); // RX | TX
+SoftwareSerial BTSerial(10, 12); // RX | TX
 
 enum animMode
 {
