@@ -4,7 +4,6 @@
  Author:	piush
 */
 
-//#include "../external/SoftwareSerial/SoftwareSerial.h"
 #include "FastLED/FastLED.h"
 #include "AltSoftSerial.h"
 #include "ledBaseFunc.h"
@@ -12,16 +11,24 @@
 #include <stdio.h>
 #include <string.h>
 
+
 AltSoftSerial BTSerial(10, 12); // RX | TX
+
+#define FRAMES_PER_SECOND  30
 
 enum animMode
 {
-	single_Color, rainbow_Wheel, equalizer_M
+	single_Color, rainbow_Wheel, music_animation1
+};
+;
+enum palette
+{
+	eRainbowColors_p, eCloudColors_p, eLavaColors_p, eOceanColors_p, eForestColors_p, ePartyColors_p
 };
 
 enum configMsgID
 {
-	ebrightness, espeed, evolume
+	ebrightness, espeed, esenisivity
 };
 
 enum infoMsgType
@@ -38,11 +45,13 @@ enum msgType
 uint8_t const numLeds = 31;
 CRGB leds[31];
 uint8_t msgLength[] = {1, 3, 1, 2, 0};	// length of message type, number of passed arguments
-uint8_t volume = 5;
-uint8_t brightness = 255;
-uint8_t speed = 50;
+uint8_t sensitivity = 4;
+uint8_t brightness = 5;
+uint8_t speed = 60;
 bool btFlag = false;
-animMode mode = single_Color;
+bool listening_to_sound = true;
+animMode mode = music_animation1;
+//TProgmemRGBPalette16 currentPalette = RainbowColors_p;
 
 
 // the setup function runs once when you press reset or power the board
@@ -53,14 +62,27 @@ void setup() {
 	fill_solid(leds, numLeds, CRGB::Black);
 	FastLED.setBrightness(brightness);
 
-	//Microphone
-	pinMode(MIC_PIN, INPUT);
+
+	//Microphone setup with the instructions found at: https://blog.yavilevich.com/2016/08/arduino-sound-level-meter-and-spectrum-analyzer/
+	pinMode(MIC_PIN, INPUT);	// only needed when the samples are read with analogRead() 
+								// instead we'll get accurate sampling with 3.3V reference and free running
+	analogReference(3.3);		// default analog reference is 5V, we change it to the 3.3V because its more stable
+	// register explanation: http://maxembedded.com/2011/06/the-adc-of-the-avr/
+	// 7 =&gt; switch to divider=128, default 9.6khz sampling
+	ADCSRA = 0xe0 + 7; // "ADC Enable", "ADC Start Conversion", "ADC Auto Trigger Enable" and divider.
+	ADMUX = 0x0; // Use adc0 (hardcoded, doesn't use MicPin). Use ARef pin for analog reference (same as analogReference(EXTERNAL)).
+	ADMUX |= 0x40; // Use Vcc for analog reference.
+	DIDR0 = 0x01; // turn off the digital input for adc0
 
 	FastLED.show();
 }
 
 // the loop function runs over and over again until power down or reset
 void loop() {
+	static bool peak = false;
+	static uint8_t amp;
+	unsigned long timerBegin;
+	float soundVol;
 	
 	if (BTSerial.available())
 	{
@@ -82,13 +104,33 @@ void loop() {
 	case rainbow_Wheel:
 		rainbowWheel();
 		break;
-	case equalizer_M:
-		equalizerM();
+	case music_animation1:
+		musicAnimation1(peak, amp);
 		break;
 	default:
 		break;
 	}
+	// this ensures that music is also measured during the break
+	if (listening_to_sound) { //listening_to_sound has to be set in processMessage()
+		timerBegin = millis();
+		peak = false;
+		amp = 0;
+		while (millis() - timerBegin < 1000 / speed) {
+			soundVol = MeasureVolume();
+			if (soundVol > sensitivity) {
+				peak = true;
+				if (amp < (uint8_t)soundVol - sensitivity) {
+					amp = (uint8_t)soundVol - sensitivity;
+				}
+			}
+		}
+	}
+	else {
+		delay(1000 / speed);
+	}
+	FastLED.show();
 	
+
 }
 
 
@@ -137,6 +179,12 @@ void processMessage(uint8_t typeID, uint8_t* msgBuf)
 	{
 		Serial.println("ChangeMode-Msg");
 		mode = (animMode) msgBuf[0];
+		if (mode == music_animation1) {
+			listening_to_sound = true;
+		}
+		else {
+			listening_to_sound = false;
+		}
 		Serial.println(mode);
 	}
 	// 3: Config Message, will change settings depending on configID
@@ -159,10 +207,10 @@ void processMessage(uint8_t typeID, uint8_t* msgBuf)
 			speed = value;
 		}
 		// config sensetivity of music animations
-		else if (configID == evolume)
+		else if (configID == esenisivity)
 		{
-			volume = value;
-			Serial.println(volume);
+			sensitivity = value;
+			Serial.println(sensitivity);
 		}
 		FastLED.show();
 	}
@@ -170,7 +218,7 @@ void processMessage(uint8_t typeID, uint8_t* msgBuf)
 
 void connectAnim(uint8_t type)
 {
-	// falls leds durch zwei teilbar und rest, dann setze die mittlere led
+	// if leds divisible by two and rest, then set the middle led
 	if (numLeds % 2)
 	{
 		if (type == connect)
@@ -186,7 +234,7 @@ void connectAnim(uint8_t type)
 			leds[(numLeds / 2)] = CRGB::Violet;
 		}
 	}
-	// falls kein rest dann setze die mittleren beiden leds
+	// if no rest then set the middle two leds
 	else
 	{
 		if (type == connect)
@@ -205,12 +253,48 @@ void connectAnim(uint8_t type)
 			leds[(numLeds / 2) - 1] = CRGB::Violet;
 		}
 	}
+	FastLED.show();
 	fadeFromMiddle();
 }
 
+void musicAnimation1(bool peak, uint8_t amp) {
+	if (peak) {
+		for (int i = 0; i <= amp; i++) {
+			leds[random16(numLeds)] = ColorFromPalette(RainbowColors_p, random8());
+		}
+	}
+	fadeToBlackBy(leds, numLeds, 40);
+}
 
-// class test
-//
+void musicAnimation2(bool peak, uint8_t amp) {
+	bool ledArray[numLeds] = { 0 };
+	if (peak) {
+		if (numLeds % 2){
+			leds[(numLeds / 2)] = ColorFromPalette(RainbowColors_p, 0);
+			ledArray[(numLeds / 2)] = true;
+		}
+	}
+	else {
+		leds[(numLeds / 2)] = CRGB::Black;
+		ledArray[(numLeds / 2)] = false;
+	}
+
+	for (uint8_t j = 0; j < (numLeds / 2); j++)
+	{
+		if (ledArray[j + 1] = true) {
+			leds[j] = leds[j + 1];
+			ledArray[j] = true;
+		}	
+	}
+	for (uint8_t j = numLeds; j > (numLeds / 2); j--)
+	{
+		if (ledArray[j - 1] = true) {
+			leds[j] = leds[j + 1];
+			ledArray[j] = true;
+		}
+	}
+}
+
 void equalizerM()
 {
 	CRGB color = 0x00;
@@ -220,9 +304,9 @@ void equalizerM()
 	static uint8_t val = 1;
 	static uint8_t wheelPos = 1;
 
-	if ((data[0] > volume) && (data[1] > volume) && (data[2] > volume) && (data[3] > volume))
+	if ((data[0] > sensitivity) && (data[1] > sensitivity) && (data[2] > sensitivity) && (data[3] > sensitivity))
 	{
-		val = (peak - volume) * 2;
+		val = (peak - sensitivity) * 2;
 		Serial.println(val);
 		if (val > numLeds)
 		{
@@ -248,22 +332,14 @@ void equalizerM()
 	FastLED.show();
 }
 
-// rainbow color 
-void rainbowWheel()
-{
-	struct CRGB color = 0x000000; // store current color
-
-	static uint8_t k = 0; // WheelPosition
-
-	for (uint8_t i = 0; i < numLeds; i++) { // Set Leds
-		wheel(((i * 256 / numLeds) + k) % 256, 1, &color);
-
-		leds[i] = color;
+void rainbowWheel() {
+	static uint8_t wheelpos = 0;
+	for (int i = 0; i < numLeds; i++) {
+		leds[i] = ColorFromPalette(RainbowColors_p, wheelpos + i*5);
 	}
-	k++;
-	FastLED.show();
-	delay(speed);
+	wheelpos++;
 }
+
 
 void singlecolor(uint8_t r, uint8_t g, uint8_t b)
 {
@@ -296,3 +372,4 @@ void fadeFromMiddle()
 		delay(15);
 	}
 }
+

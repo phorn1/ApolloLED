@@ -13,6 +13,14 @@
 
 #define pgm_read_word_near(address_short) __LPM_word((uint16_t)(address_short))
 
+
+// http://yaab-arduino.blogspot.co.il/2015/02/fast-sampling-from-analog-input.html
+#define cbi(sfr, bit) (_SFR_BYTE(sfr) &amp;= ~_BV(bit))
+#define sbi(sfr, bit) (_SFR_BYTE(sfr) |= _BV(bit))
+
+
+
+
 // calculates Color
 void wheel(uint8_t WheelPos, uint8_t Dim, struct CRGB* color);
 
@@ -79,3 +87,4 @@ RESULT (in-place FFT), with 0 <= n < 2**m; set inverse to
 0 for forward transform (FFT), or 1 for iFFT.
 */
 int fix_fft(char fr[], char fi[], int m, int inverse);
+float MeasureVolume();

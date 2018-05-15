@@ -1,6 +1,5 @@
 #include "ledBaseFunc.h"
 
-
 // calculates Color
 void wheel(uint8_t WheelPos, uint8_t Dim, struct CRGB* color) {
 	if (WheelPos < 85) {
@@ -40,6 +39,32 @@ void processAudio(uint8_t data[]) {
 	data[2] = (uint8_t)sqrt(re[data[2]] * re[data[2]] + im[data[2]] * im[data[2]]);
 	data[3] = (uint8_t)sqrt(re[data[3]] * re[data[3]] + im[data[3]] * im[data[3]]);
 	//Serial.println(data[0]);
+}
+
+#define MicSamples (1024*2)
+#define AmpMax (1024 /2)
+
+//returns commonly values in the range of 2.5 and 15
+float MeasureVolume()
+{
+	static int averageVal = 320;				// estimatated base line of adc
+	long avg = 0, soundVolRMS = 0;
+	for (int i = 0; i < MicSamples; i++)
+	{
+		while (!(ADCSRA & /*0x10*/_BV(ADIF)));	// wait for adc to be ready (ADIF)
+		sbi(ADCSRA, ADIF);						// restart adc
+		byte m = ADCL;							// fetch adc data
+		byte j = ADCH;
+		int k = ((int)j << 8) | m;				// form into an int
+		avg += k;
+		int amp = abs(k - averageVal);			
+		
+		soundVolRMS += ((long)amp*amp);			//Root Mean Square(RMS) so that higher amplitutes get weighted more
+	}
+	averageVal = avg / MicSamples;
+	soundVolRMS /= MicSamples;
+
+	return (float)sqrt(soundVolRMS);					//Return the RMS of the amplitudes
 }
 
 /*
