@@ -162,7 +162,7 @@ void processMessage(uint8_t typeID, uint8_t* msgBuf)
 		else if (configID == evolume)
 		{
 			volume = value;
-			Serial.println(volume);
+			//Serial.println(volume);
 		}
 		FastLED.show();
 	}
@@ -295,4 +295,10 @@ void fadeFromMiddle()
 		FastLED.show();
 		delay(15);
 	}
+}
+
+
+void saveConfig()
+{
+	//TODO
 }
