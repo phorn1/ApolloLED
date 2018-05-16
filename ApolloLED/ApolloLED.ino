@@ -4,21 +4,22 @@
  Author:	piush
 */
 
+
 #include "FastLED/FastLED.h"
-#include "AltSoftSerial.h"
+#include "SoftwareSerial-master\SoftwareSerial.h"
 #include "ledBaseFunc.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
 
-AltSoftSerial BTSerial(10, 12); // RX | TX
+SoftwareSerial BTSerial(10, 11); // RX | TX
 
 #define FRAMES_PER_SECOND  30
 
 enum animMode
 {
-	single_Color, rainbow_Wheel, music_animation1
+	single_Color, rainbow_Wheel, music_animation1, music_animation2
 };
 ;
 enum palette
@@ -28,7 +29,7 @@ enum palette
 
 enum configMsgID
 {
-	ebrightness, espeed, esenisivity
+	ebrightness, espeed, esenisivity, etheme
 };
 
 enum infoMsgType
@@ -46,12 +47,13 @@ uint8_t const numLeds = 31;
 CRGB leds[31];
 uint8_t msgLength[] = {1, 3, 1, 2, 0};	// length of message type, number of passed arguments
 uint8_t sensitivity = 4;
-uint8_t brightness = 5;
+uint8_t brightness = 255;
 uint8_t speed = 60;
 bool btFlag = false;
 bool listening_to_sound = true;
-animMode mode = music_animation1;
-//TProgmemRGBPalette16 currentPalette = RainbowColors_p;
+animMode mode = music_animation2;
+CRGBPalette16 currentPalette;
+
 
 
 // the setup function runs once when you press reset or power the board
@@ -61,6 +63,7 @@ void setup() {
 	FastLED.addLeds<WS2812B, DATA_PIN, GRB>(leds, numLeds);
 	fill_solid(leds, numLeds, CRGB::Black);
 	FastLED.setBrightness(brightness);
+	currentPalette = ForestColors_p;
 
 
 	//Microphone setup with the instructions found at: https://blog.yavilevich.com/2016/08/arduino-sound-level-meter-and-spectrum-analyzer/
@@ -92,10 +95,10 @@ void loop() {
 		Serial.println((uint8_t)typeID);
 		uint8_t msgBuf[10];
 		BTSerial.readBytes(msgBuf, msgLength[typeID]);
-		/*for (int i = 0; i < 10; i++)
+		for (int i = 0; i < 10; i++)
 		{
 			Serial.println((uint8_t)msgBuf[i]);
-		}*/
+		}
 		processMessage(typeID, msgBuf);
 	}
 	// calling animation depending on mode value
@@ -106,6 +109,9 @@ void loop() {
 		break;
 	case music_animation1:
 		musicAnimation1(peak, amp);
+		break;
+	case music_animation2:
+		musicAnimation2(peak, amp);
 		break;
 	default:
 		break;
@@ -157,6 +163,7 @@ void processMessage(uint8_t typeID, uint8_t* msgBuf)
 		}
 		else if (type == save)
 		{
+			saveConfig();
 			connectAnim(save);
 		}
 	}
@@ -210,7 +217,11 @@ void processMessage(uint8_t typeID, uint8_t* msgBuf)
 		else if (configID == esenisivity)
 		{
 			sensitivity = value;
-			Serial.println(sensitivity);
+			//Serial.println(sensitivity);
+		}
+		else if (configID == etheme)
+		{
+			changeTheme(value);
 		}
 		FastLED.show();
 	}
@@ -267,32 +278,21 @@ void musicAnimation1(bool peak, uint8_t amp) {
 }
 
 void musicAnimation2(bool peak, uint8_t amp) {
-	bool ledArray[numLeds] = { 0 };
 	if (peak) {
-		if (numLeds % 2){
-			leds[(numLeds / 2)] = ColorFromPalette(RainbowColors_p, 0);
-			ledArray[(numLeds / 2)] = true;
-		}
-	}
-	else {
-		leds[(numLeds / 2)] = CRGB::Black;
-		ledArray[(numLeds / 2)] = false;
+
+		leds[(numLeds / 2)] = ColorFromPalette(RainbowColors_p, random8());
 	}
 
-	for (uint8_t j = 0; j < (numLeds / 2); j++)
+	for (uint8_t j = 0; j < (numLeds / 2) ; j++)
 	{
-		if (ledArray[j + 1] = true) {
-			leds[j] = leds[j + 1];
-			ledArray[j] = true;
-		}	
+		leds[j] = leds[j + 1];
 	}
-	for (uint8_t j = numLeds; j > (numLeds / 2); j--)
+	for (uint8_t j = numLeds - 1; j > (numLeds / 2); j--)
 	{
-		if (ledArray[j - 1] = true) {
-			leds[j] = leds[j + 1];
-			ledArray[j] = true;
-		}
+		leds[j] = leds[j - 1];
 	}
+	fadeToBlackBy(leds, numLeds, 100);
+	FastLED.show();
 }
 
 void equalizerM()
@@ -335,7 +335,7 @@ void equalizerM()
 void rainbowWheel() {
 	static uint8_t wheelpos = 0;
 	for (int i = 0; i < numLeds; i++) {
-		leds[i] = ColorFromPalette(RainbowColors_p, wheelpos + i*5);
+		leds[i] = ColorFromPalette(currentPalette, wheelpos + i*5);
 	}
 	wheelpos++;
 }
@@ -356,7 +356,7 @@ void fadeFromMiddle()
 {
 	for (uint8_t i = 0; i < numLeds*3; i++)
 	{
-		for (uint8_t j = numLeds; j >(numLeds / 2); j--)
+		for (uint8_t j = numLeds - 1; j >(numLeds / 2); j--)
 		{
 			leds[j] = leds[j - 1];
 		}
@@ -377,4 +377,36 @@ void fadeFromMiddle()
 void saveConfig()
 {
 	//TODO
+}
+
+void changeTheme(uint8_t value)
+{
+	value = (palette)value;
+	CRGBPalette16 tempPalette;
+
+	switch (value)
+	{
+	case eRainbowColors_p:
+		tempPalette = RainbowColors_p;
+		break;
+	case eCloudColors_p:
+		tempPalette = CloudColors_p;
+		break;
+	case eLavaColors_p:
+		tempPalette = LavaColors_p;
+		break;
+	case eOceanColors_p:
+		tempPalette = OceanColors_p;
+		break;
+	case eForestColors_p:
+		tempPalette = ForestColors_p;
+		break;
+	case ePartyColors_p:
+		tempPalette = PartyColors_p;
+		break;
+	default:
+		tempPalette = PartyColors_p;
+		break;
+	}
+	currentPalette = tempPalette;
 }
