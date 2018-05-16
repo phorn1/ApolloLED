@@ -373,3 +373,8 @@ void fadeFromMiddle()
 	}
 }
 
+
+void saveConfig()
+{
+	//TODO
+}
