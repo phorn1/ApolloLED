@@ -24,21 +24,12 @@
     <ClInclude Include="ledBaseFunc.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="AltSoftSerial.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="AltSoftSerial_Boards.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="AltSoftSerial_Timers.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ledBaseFunc.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="AltSoftSerial.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
