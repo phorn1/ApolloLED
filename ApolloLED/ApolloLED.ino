@@ -66,77 +66,79 @@ void setup() {
 	currentPalette = ForestColors_p;
 
 
-	//Microphone setup with the instructions found at: https://blog.yavilevich.com/2016/08/arduino-sound-level-meter-and-spectrum-analyzer/
+	////Microphone setup with the instructions found at: https://blog.yavilevich.com/2016/08/arduino-sound-level-meter-and-spectrum-analyzer/
 	pinMode(MIC_PIN, INPUT);	// only needed when the samples are read with analogRead() 
-								// instead we'll get accurate sampling with 3.3V reference and free running
-	analogReference(3.3);		// default analog reference is 5V, we change it to the 3.3V because its more stable
-	// register explanation: http://maxembedded.com/2011/06/the-adc-of-the-avr/
-	// 7 =&gt; switch to divider=128, default 9.6khz sampling
-	ADCSRA = 0xe0 + 7; // "ADC Enable", "ADC Start Conversion", "ADC Auto Trigger Enable" and divider.
-	ADMUX = 0x0; // Use adc0 (hardcoded, doesn't use MicPin). Use ARef pin for analog reference (same as analogReference(EXTERNAL)).
-	ADMUX |= 0x40; // Use Vcc for analog reference.
-	DIDR0 = 0x01; // turn off the digital input for adc0
+	//							// instead we'll get accurate sampling with 3.3V reference and free running
+	//analogReference(3.3);		// default analog reference is 5V, we change it to the 3.3V because its more stable
+	//// register explanation: http://maxembedded.com/2011/06/the-adc-of-the-avr/
+	//// 7 =&gt; switch to divider=128, default 9.6khz sampling
+	//ADCSRA = 0xe0 + 7; // "ADC Enable", "ADC Start Conversion", "ADC Auto Trigger Enable" and divider.
+	//ADMUX = 0x0; // Use adc0 (hardcoded, doesn't use MicPin). Use ARef pin for analog reference (same as analogReference(EXTERNAL)).
+	//ADMUX |= 0x40; // Use Vcc for analog reference.
+	//DIDR0 = 0x01; // turn off the digital input for adc0
 
+	analogReference(DEFAULT);
 	FastLED.show();
 }
 
 // the loop function runs over and over again until power down or reset
 void loop() {
-	static bool peak = false;
-	static uint8_t amp;
-	unsigned long timerBegin;
-	float soundVol;
-	
-	if (BTSerial.available())
-	{
-		// BT Input
-		uint8_t typeID;
-		BTSerial.readBytes(&typeID, 1);
-		Serial.println((uint8_t)typeID);
-		uint8_t msgBuf[10];
-		BTSerial.readBytes(msgBuf, msgLength[typeID]);
-		for (int i = 0; i < 10; i++)
-		{
-			Serial.println((uint8_t)msgBuf[i]);
-		}
-		processMessage(typeID, msgBuf);
-	}
-	// calling animation depending on mode value
-	switch (mode)
-	{
-	case rainbow_Wheel:
-		rainbowWheel();
-		break;
-	case music_animation1:
-		musicAnimation1(peak, amp);
-		break;
-	case music_animation2:
-		musicAnimation2(peak, amp);
-		break;
-	default:
-		break;
-	}
-	// this ensures that music is also measured during the break
-	if (listening_to_sound) { //listening_to_sound has to be set in processMessage()
-		timerBegin = millis();
-		peak = false;
-		amp = 0;
-		while (millis() - timerBegin < 1000 / speed) {
-			soundVol = MeasureVolume();
-			if (soundVol > sensitivity) {
-				peak = true;
-				if (amp < (uint8_t)soundVol - sensitivity) {
-					amp = (uint8_t)soundVol - sensitivity;
-				}
-			}
-		}
-	}
-	else {
-		delay(1000 / speed);
-	}
-	FastLED.show();
-	
-
+	//static bool peak = false;
+	//static uint8_t amp;
+	//unsigned long timerBegin;
+	//float soundVol;
+	//
+	//if (BTSerial.available())
+	//{
+	//	// BT Input
+	//	uint8_t typeID;
+	//	BTSerial.readBytes(&typeID, 1);
+	//	Serial.println((uint8_t)typeID);
+	//	uint8_t msgBuf[10];
+	//	BTSerial.readBytes(msgBuf, msgLength[typeID]);
+	//	for (int i = 0; i < 10; i++)
+	//	{
+	//		Serial.println((uint8_t)msgBuf[i]);
+	//	}
+	//	processMessage(typeID, msgBuf);
+	//}
+	//// calling animation depending on mode value
+	//switch (mode)
+	//{
+	//case rainbow_Wheel:
+	//	rainbowWheel();
+	//	break;
+	//case music_animation1:
+	//	musicAnimation1(peak, amp);
+	//	break;
+	//case music_animation2:
+	//	musicAnimation2(peak, amp);
+	//	break;
+	//default:
+	//	break;
+	//}
+	//// this ensures that music is also measured during the break
+	//if (listening_to_sound) { //listening_to_sound has to be set in processMessage()
+	//	timerBegin = millis();
+	//	peak = false;
+	//	amp = 0;
+	//	while (millis() - timerBegin < 1000 / speed) {
+	//		soundVol = MeasureVolume();
+	//		if (soundVol > sensitivity) {
+	//			peak = true;
+	//			if (amp < (uint8_t)soundVol - sensitivity) {
+	//				amp = (uint8_t)soundVol - sensitivity;
+	//			}
+	//		}
+	//	}
+	//}
+	//else {
+	//	delay(1000 / speed);
+	//}
+	//FastLED.show();
+	uint8_t data[4] = { 1, 2, 3, 5 }; // current loudness
+	processAudio(data);
+	delay(10);
 }
 
 
