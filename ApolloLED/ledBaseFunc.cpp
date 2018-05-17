@@ -34,17 +34,12 @@ void processAudio(uint8_t data[]) {
 	}
 	fix_fft(re, im, 7, 0);
 
-	uint8_t data2[64];
-
-	for (int i = 0; i < 64; i++)
-		data2[i] = (uint8_t)sqrt(re[i] * re[i] + im[i] * im[i]);
-
-	for (int i = 0; i < 64; i++)
-	{
-		Serial.print(data2[i]);
-		Serial.print(" ");
-	}
-	Serial.println();
+	data[0] = sqrt(re[0] * re[0] + im[0] * im[0]);
+	data[1] = sqrt(re[1] * re[1] + im[1] * im[1]);
+	data[2] = sqrt(re[2] * re[2] + im[2] * im[2]);
+	data[3] = sqrt(re[3] * re[3] + im[3] * im[3]);
+	data[4] = sqrt(re[4] * re[4] + im[4] * im[4]);
+	data[5] = sqrt(re[5] * re[5] + im[5] * im[5]);
 }
 
 #define MicSamples (1024*2)

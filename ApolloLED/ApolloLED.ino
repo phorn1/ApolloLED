@@ -83,62 +83,59 @@ void setup() {
 
 // the loop function runs over and over again until power down or reset
 void loop() {
-	//static bool peak = false;
-	//static uint8_t amp;
-	//unsigned long timerBegin;
-	//float soundVol;
-	//
-	//if (BTSerial.available())
-	//{
-	//	// BT Input
-	//	uint8_t typeID;
-	//	BTSerial.readBytes(&typeID, 1);
-	//	Serial.println((uint8_t)typeID);
-	//	uint8_t msgBuf[10];
-	//	BTSerial.readBytes(msgBuf, msgLength[typeID]);
-	//	for (int i = 0; i < 10; i++)
-	//	{
-	//		Serial.println((uint8_t)msgBuf[i]);
-	//	}
-	//	processMessage(typeID, msgBuf);
-	//}
-	//// calling animation depending on mode value
-	//switch (mode)
-	//{
-	//case rainbow_Wheel:
-	//	rainbowWheel();
-	//	break;
-	//case music_animation1:
-	//	musicAnimation1(peak, amp);
-	//	break;
-	//case music_animation2:
-	//	musicAnimation2(peak, amp);
-	//	break;
-	//default:
-	//	break;
-	//}
-	//// this ensures that music is also measured during the break
-	//if (listening_to_sound) { //listening_to_sound has to be set in processMessage()
-	//	timerBegin = millis();
-	//	peak = false;
-	//	amp = 0;
-	//	while (millis() - timerBegin < 1000 / speed) {
-	//		soundVol = MeasureVolume();
-	//		if (soundVol > sensitivity) {
-	//			peak = true;
-	//			if (amp < (uint8_t)soundVol - sensitivity) {
-	//				amp = (uint8_t)soundVol - sensitivity;
-	//			}
-	//		}
-	//	}
-	//}
-	//else {
-	//	delay(1000 / speed);
-	//}
-	//FastLED.show();
-	uint8_t data[4] = { 1, 2, 3, 5 }; // current loudness
-	processAudio(data);
-	delay(10);
+	static bool peak = false;
+	static uint8_t amp;
+	unsigned long timerBegin;
+	float soundVol;
+	
+	if (BTSerial.available())
+	{
+		// BT Input
+		uint8_t typeID;
+		BTSerial.readBytes(&typeID, 1);
+		Serial.println((uint8_t)typeID);
+		uint8_t msgBuf[10];
+		BTSerial.readBytes(msgBuf, msgLength[typeID]);
+		for (int i = 0; i < 10; i++)
+		{
+			Serial.println((uint8_t)msgBuf[i]);
+		}
+		processMessage(typeID, msgBuf);
+	}
+	// calling animation depending on mode value
+	switch (mode)
+	{
+	case rainbow_Wheel:
+		rainbowWheel();
+		break;
+	case music_animation1:
+		musicAnimation1(peak, amp);
+		break;
+	case music_animation2:
+		musicAnimation2(peak, amp);
+		break;
+	default:
+		break;
+	}
+	// this ensures that music is also measured during the break
+	if (listening_to_sound) { //listening_to_sound has to be set in processMessage()
+		timerBegin = millis();
+		peak = false;
+		amp = 0;
+		while (millis() - timerBegin < 1000 / speed) {
+			soundVol = MeasureVolume();
+			if (soundVol > sensitivity) {
+				peak = true;
+				if (amp < (uint8_t)soundVol - sensitivity) {
+					amp = (uint8_t)soundVol - sensitivity;
+				}
+			}
+		}
+	}
+	else {
+		delay(1000 / speed);
+	}
+	FastLED.show();
 }
 
 
