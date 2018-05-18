@@ -50,6 +50,7 @@ struct globalConfig {
 	uint8_t speed = 100;
 	animMode mode = single_Color;
 	uint8_t numLeds = 0;
+	CRGB color = CRGB::Black;
 	CRGBPalette16 currentPalette;
 };
 
@@ -66,17 +67,20 @@ CRGB* leds;
 void setup() {
 	Serial.begin(9600);
 	BTSerial.begin(9600);
+	pinMode(MIC_PIN, INPUT);	// only needed when the samples are read with analogRead() 
+	analogReference(DEFAULT);
 
 	loadConfigEEPROM(&config);
 
+	// allocate memory for led array, setting free with changeNumLed function
 	leds = (CRGB*) malloc(sizeof(CRGB) * config.numLeds);
 	FastLED.addLeds<WS2812B, DATA_PIN, GRB>(leds, config.numLeds);
-	fill_solid(leds, config.numLeds, CRGB::Black);
-	//
 
-	pinMode(MIC_PIN, INPUT);	// only needed when the samples are read with analogRead() 
-
-	analogReference(DEFAULT);
+	// set color to stored color in eeprom. only need when no animation is running
+	if (config.mode == single_Color)
+	{
+		fill_solid(leds, config.numLeds, config.color);
+	}
 
 	FastLED.setBrightness(config.brightness);
 	FastLED.show();
