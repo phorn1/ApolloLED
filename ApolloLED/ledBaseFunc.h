@@ -36,11 +36,11 @@ enum msgType
 
 // start values
 struct globalConfig {
-	uint8_t sensitivity = 100;
+	uint8_t sensitivity = 70;
 	uint8_t brightness = 255;
 	uint8_t speed = 100;
 	animMode mode = single_Color;
-	uint8_t numLeds = 20;
+	uint8_t numLeds = 31;
 	CRGB color = CRGB::Green;
 	CRGBPalette16 currentPalette;
 };

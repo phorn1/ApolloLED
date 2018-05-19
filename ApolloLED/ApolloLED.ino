@@ -8,7 +8,7 @@
 #include "FastLED/FastLED.h"
 #include "SoftwareSerial-master\SoftwareSerial.h"
 #include "ledBaseFunc.h"
-#include "EEPROM\EEPROM.h"
+#include <EEPROM.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -16,7 +16,7 @@
 
 SoftwareSerial BTSerial(11, 12); // RX | TX
 
-#define FRAMES_PER_SECOND  30
+#define FRAMES_PER_SECOND  15
 
 uint8_t msgLength[] = {1, 3, 1, 2, 0};	// length of message type, number of passed arguments
 struct globalConfig config;
@@ -35,8 +35,8 @@ void setup() {
 
 	//testing
 	config.mode = eEqualizerM;
-	config.numLeds = 15;
-	config.sensitivity = 40;
+	config.numLeds = 31;
+	config.sensitivity = 14;
 	config.currentPalette = PartyColors_p;
 
 	// allocate memory for led array, setting free with changeNumLed function
@@ -50,16 +50,13 @@ void setup() {
 	}
 
 	FastLED.setBrightness(config.brightness);
-	FastLED.show();
+	FastLED.show(); 
+	
 }
 
 // the loop function runs over and over again until power down or reset
 void loop() {
-	static bool peak = false;
-	static uint8_t amp;
-	unsigned long timerBegin;
 
-	
 	if (BTSerial.available())
 	{
 		// BT Input
@@ -82,10 +79,10 @@ void loop() {
 		delay(1000 / config.speed);
 		break;
 	case music_animation1:
-		musicAnimation1(peak, amp);
+		musicAnimation1();
 		break;
 	case music_animation2:
-		musicAnimation2(peak, amp);
+		musicAnimation2();
 		break;
 	case eEqualizerM:
 		equalizerM();
@@ -233,19 +230,32 @@ void connectAnim(uint8_t type)
 	}
 }
 
-void musicAnimation1(bool peak, uint8_t amp) {
-	if (peak) {
-		for (int i = 0; i <= amp; i++) {
-			leds[random16(config.numLeds)] = ColorFromPalette(RainbowColors_p, random8());
-		}
+void musicAnimation1() {
+	static uint8_t wheelpos = 0;
+	uint8_t maxPeekVal = processAudio();
+	if (maxPeekVal > config.sensitivity) {
+		leds[(config.numLeds / 2)] = ColorFromPalette(RainbowColors_p, wheelpos + random8(60), config.brightness);
 	}
-	fadeToBlackBy(leds, config.numLeds, 40);
+
+	for (uint8_t j = 0; j < (config.numLeds / 2); j++)
+	{
+		leds[j] = leds[j + 1];
+	}
+	for (uint8_t j = config.numLeds - 1; j >(config.numLeds / 2); j--)
+	{
+		leds[j] = leds[j - 1];
+	}
+
+	fadeToBlackBy(leds, config.numLeds, 70);
+	FastLED.show();
+	delay(10);
+	wheelpos += random8(2) * random8(2);
 }
-
-void musicAnimation2(bool peak, uint8_t amp) {
-	if (peak) {
-
-		leds[(config.numLeds / 2)] = ColorFromPalette(RainbowColors_p, random8());
+void musicAnimation2() {
+	static uint8_t wheelpos = 0;
+	uint8_t maxPeekVal = processAudio();
+	if (maxPeekVal > config.sensitivity) {
+		leds[(config.numLeds / 2)] = ColorFromPalette(RainbowColors_p, wheelpos + random8(60), config.brightness);
 	}
 
 	for (uint8_t j = 0; j < (config.numLeds / 2) ; j++)
@@ -256,8 +266,11 @@ void musicAnimation2(bool peak, uint8_t amp) {
 	{
 		leds[j] = leds[j - 1];
 	}
-	fadeToBlackBy(leds, config.numLeds, 100);
+
+	fadeToBlackBy(leds, config.numLeds, 70);
 	FastLED.show();
+	delay(10);
+	wheelpos+= random8(2) * random8(2);
 }
 
 void equalizerM()
