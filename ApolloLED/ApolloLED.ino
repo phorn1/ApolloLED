@@ -8,54 +8,15 @@
 #include "FastLED/FastLED.h"
 #include "SoftwareSerial-master\SoftwareSerial.h"
 #include "ledBaseFunc.h"
+#include "EEPROM\EEPROM.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
 
-SoftwareSerial BTSerial(10, 11); // RX | TX
+SoftwareSerial BTSerial(11, 12); // RX | TX
 
 #define FRAMES_PER_SECOND  30
-
-enum animMode
-{
-	single_Color, rainbow_Wheel, music_animation1, music_animation2
-};
-;
-enum palette
-{
-	eRainbowColors_p, eCloudColors_p, eLavaColors_p, eOceanColors_p, eForestColors_p, ePartyColors_p
-};
-
-enum configMsgID
-{
-	ebrightness, espeed, esenisivity, etheme
-};
-
-enum infoMsgType
-{
-	connect, disconnect, save
-};
-
-enum msgType
-{
-	info_Msg, singleColor_Msg, changeMode_Msg, config_Msg
-};
-
-
-
-struct globalConfig {
-	uint8_t sensitivity = 100;
-	uint8_t brightness = 255;
-	uint8_t speed = 100;
-	animMode mode = single_Color;
-	uint8_t numLeds = 0;
-	CRGB color = CRGB::Black;
-	CRGBPalette16 currentPalette;
-};
-
-
-
 
 uint8_t msgLength[] = {1, 3, 1, 2, 0};	// length of message type, number of passed arguments
 struct globalConfig config;
@@ -71,6 +32,12 @@ void setup() {
 	analogReference(DEFAULT);
 
 	loadConfigEEPROM(&config);
+
+	//testing
+	config.mode = eEqualizerM;
+	config.numLeds = 15;
+	config.sensitivity = 40;
+	config.currentPalette = PartyColors_p;
 
 	// allocate memory for led array, setting free with changeNumLed function
 	leds = (CRGB*) malloc(sizeof(CRGB) * config.numLeds);
@@ -91,15 +58,15 @@ void loop() {
 	static bool peak = false;
 	static uint8_t amp;
 	unsigned long timerBegin;
-	float soundVol;
+
 	
 	if (BTSerial.available())
 	{
 		// BT Input
 		uint8_t typeID;
-		BTSerial.readBytes(&typeID, 1);
-		Serial.println((uint8_t)typeID);
 		uint8_t msgBuf[10];
+		BTSerial.readBytes(&typeID, 1);
+		//Serial.println((uint8_t)typeID);
 		BTSerial.readBytes(msgBuf, msgLength[typeID]);
 		for (int i = 0; i < 10; i++)
 		{
@@ -112,6 +79,7 @@ void loop() {
 	{
 	case rainbow_Wheel:
 		rainbowWheel();
+		delay(1000 / config.speed);
 		break;
 	case music_animation1:
 		musicAnimation1(peak, amp);
@@ -119,10 +87,12 @@ void loop() {
 	case music_animation2:
 		musicAnimation2(peak, amp);
 		break;
+	case eEqualizerM:
+		equalizerM();
+		break;
 	default:
 		break;
 	}
-	delay(1000 / config.speed);
 	FastLED.show();
 }
 
@@ -150,7 +120,7 @@ void processMessage(uint8_t typeID, uint8_t* msgBuf)
 		}
 		else if (type == save)
 		{
-			saveConfig();
+			saveConfigEEPROM(config);
 			connectAnim(save);
 		}
 	}
@@ -200,6 +170,16 @@ void processMessage(uint8_t typeID, uint8_t* msgBuf)
 			config.sensitivity = value;
 			//Serial.println(sensitivity);
 		}
+		else if (configID == enumLeds)
+		{
+			// set old memory free
+			free(leds);
+			config.numLeds = value;
+			// allocate memory for led array, setting free with changeNumLed function
+			leds = (CRGB*)malloc(sizeof(CRGB) * config.numLeds);
+			FastLED.addLeds<WS2812B, DATA_PIN, GRB>(leds, config.numLeds);
+			FastLED.show();
+		}
 		else if (configID == etheme)
 		{
 			changeTheme(value);
@@ -247,6 +227,10 @@ void connectAnim(uint8_t type)
 	}
 	FastLED.show();
 	fadeFromMiddle();
+	if (config.mode == single_Color)
+	{
+		singlecolor(config.color.r, config.color.g, config.color.b);
+	}
 }
 
 void musicAnimation1(bool peak, uint8_t amp) {
@@ -278,15 +262,13 @@ void musicAnimation2(bool peak, uint8_t amp) {
 
 void equalizerM()
 {
-	CRGB color = 0x00;
-	uint8_t maxPeekVal = processAudio(); // calculate audio data and returns value of highest peek
-	Serial.println(maxPeekVal);
-	uint8_t numLedPeek;
 	static uint8_t wheelPos = 1;
+	uint8_t maxPeekVal = processAudio(); // calculate audio data and returns value of highest peek
+	double numLedPeek;
 
-	numLedPeek = (maxPeekVal / 255) * config.numLeds;
+	numLedPeek = (double) maxPeekVal * ((double) config.numLeds / ((double) 120 - (double) config.sensitivity));
 
-
+	//Serial.println(numLedPeek);
 
 
 	if (maxPeekVal >= config.sensitivity)
@@ -299,14 +281,14 @@ void equalizerM()
 
 	for (uint8_t i = 0; i < numLedPeek; i++)
 	{
-		leds[i].fadeToBlackBy((i/2) + 10);
+		leds[i].fadeToBlackBy((i/2) + 5);
 	}
 	for (uint8_t i = numLedPeek; i < config.numLeds; i++)
 	{
-		leds[i].fadeToBlackBy(50);
+		leds[i].fadeToBlackBy(20);
 	}
-	wheelPos++;
 	FastLED.show();
+	wheelPos++;
 }
 
 void rainbowWheel() {
@@ -326,6 +308,7 @@ void singlecolor(uint8_t r, uint8_t g, uint8_t b)
 		leds[i].g = g;
 		leds[i].b = b;
 	}
+	config.color = CRGB(r, g, b);
 	FastLED.show();
 }
 
@@ -346,14 +329,8 @@ void fadeFromMiddle()
 			leds[j].fadeToBlackBy(15);
 		}
 		FastLED.show();
-		delay(15);
+		delay(30);
 	}
-}
-
-
-void saveConfig()
-{
-	//TODO
 }
 
 void changeTheme(uint8_t value)

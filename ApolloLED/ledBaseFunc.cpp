@@ -32,11 +32,13 @@ uint8_t processAudio() {
 
 void saveConfigEEPROM(struct globalConfig c)
 {
-
+	Serial.println("Saving Config EEPROM");
+	eeprom_write_block(&c, 0, sizeof(globalConfig));
 }
 
 void loadConfigEEPROM(struct globalConfig* c)
 {
-
+	Serial.println("Reading Config EEPROM");
+	eeprom_read_block(c, 0, sizeof(globalConfig));
 }
 
