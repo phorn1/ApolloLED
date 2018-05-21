@@ -34,10 +34,10 @@ void setup() {
 	loadConfigEEPROM(&config);
 
 	//testing
-	config.mode = music_animation1;
+	config.mode = eEqualizerM;
 	config.numLeds = 31;
-	config.sensitivity = 14;
-	config.currentPalette = OceanColors_p;
+	config.sensitivity = 40;
+	config.currentPalette = RainbowColors_p;
 	config.brightness = 255;
 
 	// allocate memory for led array, setting free with changeNumLed function
@@ -255,9 +255,15 @@ void musicAnimation2() {
 	static uint8_t wheelpos = 0;
 	uint8_t maxPeekVal = processAudio();
 	if (maxPeekVal > config.sensitivity) {
-		leds[(config.numLeds / 2)] = ColorFromPalette(RainbowColors_p, wheelpos, config.brightness);
+		leds[0] = ColorFromPalette(config.currentPalette, wheelpos, config.brightness);
 	}
-
+	else {
+		leds[0].fadeToBlackBy(150);
+	}
+	for (int8_t i = config.numLeds; i > 0; i--) {
+		leds[i] = leds[i - 1];
+	}
+	wheelpos++;
 }
 
 void equalizerM()
