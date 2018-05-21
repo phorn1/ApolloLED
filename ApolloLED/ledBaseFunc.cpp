@@ -26,7 +26,15 @@ uint8_t processAudio() {
 			maxPeekVal = data[i];
 		}
 	}
-	return maxPeekVal;
+	//Serial.println(maxPeekVal);
+	if (maxPeekVal <= 30)
+	{
+		return 0;
+	}
+	else
+	{
+		return maxPeekVal;
+	}
 }
 
 

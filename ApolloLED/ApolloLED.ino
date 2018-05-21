@@ -34,10 +34,11 @@ void setup() {
 	loadConfigEEPROM(&config);
 
 	//testing
-	config.mode = eEqualizerM;
+	config.mode = music_animation1;
 	config.numLeds = 31;
 	config.sensitivity = 14;
-	config.currentPalette = PartyColors_p;
+	config.currentPalette = OceanColors_p;
+	config.brightness = 255;
 
 	// allocate memory for led array, setting free with changeNumLed function
 	leds = (CRGB*) malloc(sizeof(CRGB) * config.numLeds);
@@ -234,7 +235,7 @@ void musicAnimation1() {
 	static uint8_t wheelpos = 0;
 	uint8_t maxPeekVal = processAudio();
 	if (maxPeekVal > config.sensitivity) {
-		leds[(config.numLeds / 2)] = ColorFromPalette(RainbowColors_p, wheelpos + random8(60), config.brightness);
+		leds[(config.numLeds / 2)] = ColorFromPalette(config.currentPalette, wheelpos, config.brightness);
 	}
 
 	for (uint8_t j = 0; j < (config.numLeds / 2); j++)
@@ -246,31 +247,17 @@ void musicAnimation1() {
 		leds[j] = leds[j - 1];
 	}
 
-	fadeToBlackBy(leds, config.numLeds, 70);
+	fadeToBlackBy(leds, config.numLeds, 60);
 	FastLED.show();
-	delay(10);
-	wheelpos += random8(2) * random8(2);
+	wheelpos += 10;
 }
 void musicAnimation2() {
 	static uint8_t wheelpos = 0;
 	uint8_t maxPeekVal = processAudio();
 	if (maxPeekVal > config.sensitivity) {
-		leds[(config.numLeds / 2)] = ColorFromPalette(RainbowColors_p, wheelpos + random8(60), config.brightness);
+		leds[(config.numLeds / 2)] = ColorFromPalette(RainbowColors_p, wheelpos, config.brightness);
 	}
 
-	for (uint8_t j = 0; j < (config.numLeds / 2) ; j++)
-	{
-		leds[j] = leds[j + 1];
-	}
-	for (uint8_t j = config.numLeds - 1; j > (config.numLeds / 2); j--)
-	{
-		leds[j] = leds[j - 1];
-	}
-
-	fadeToBlackBy(leds, config.numLeds, 70);
-	FastLED.show();
-	delay(10);
-	wheelpos+= random8(2) * random8(2);
 }
 
 void equalizerM()
