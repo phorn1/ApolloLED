@@ -52,7 +52,6 @@ void setup() {
 
 	FastLED.setBrightness(config.brightness);
 	FastLED.show(); 
-	
 }
 
 // the loop function runs over and over again until power down or reset
