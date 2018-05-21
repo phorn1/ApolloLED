@@ -234,7 +234,7 @@ void musicAnimation1() {
 	static uint8_t wheelpos = 0;
 	uint8_t maxPeekVal = processAudio();
 	if (maxPeekVal > config.sensitivity) {
-		leds[(config.numLeds / 2)] = ColorFromPalette(config.currentPalette, wheelpos, config.brightness);
+		leds[config.numLeds/2] = ColorFromPalette(config.currentPalette, wheelpos, config.brightness);
 	}
 
 	for (uint8_t j = 0; j < (config.numLeds / 2); j++)
@@ -245,9 +245,9 @@ void musicAnimation1() {
 	{
 		leds[j] = leds[j - 1];
 	}
-
-	fadeToBlackBy(leds, config.numLeds, 60);
+	fadeToBlackBy(leds, config.numLeds, (uint8_t)((1.0 / config.numLeds) * 1800)); 
 	FastLED.show();
+	delay(10);
 	wheelpos += 10;
 }
 void musicAnimation2() {
