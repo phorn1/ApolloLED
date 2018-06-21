@@ -33,13 +33,6 @@ void setup() {
 
 	loadConfigEEPROM(&config);
 
-	//testing
-	config.mode = eEqualizerM;
-	config.numLeds = 31;
-	config.sensitivity = 40;
-	config.currentPalette = RainbowColors_p;
-	config.brightness = 255;
-
 	// allocate memory for led array, setting free with changeNumLed function
 	leds = (CRGB*) malloc(sizeof(CRGB) * config.numLeds);
 	FastLED.addLeds<WS2812B, DATA_PIN, GRB>(leds, config.numLeds);
@@ -235,6 +228,7 @@ void musicAnimation1() {
 	uint8_t maxPeekVal = processAudio();
 	if (maxPeekVal > config.sensitivity) {
 		leds[config.numLeds/2] = ColorFromPalette(config.currentPalette, wheelpos, config.brightness);
+		wheelpos += 10;
 	}
 
 	for (uint8_t j = 0; j < (config.numLeds / 2); j++)
@@ -248,7 +242,6 @@ void musicAnimation1() {
 	fadeToBlackBy(leds, config.numLeds, (uint8_t)((1.0 / config.numLeds) * 1800)); 
 	FastLED.show();
 	delay(10);
-	wheelpos += 10;
 }
 void musicAnimation2() {
 	static uint8_t wheelpos = 0;
@@ -271,9 +264,10 @@ void equalizerM()
 	uint8_t maxPeekVal = processAudio(); // calculate audio data and returns value of highest peek
 	double numLedPeek;
 
-	numLedPeek = (double) maxPeekVal * ((double) config.numLeds / ((double) 120 - (double) config.sensitivity));
+	numLedPeek = maxPeekVal / (120 / config.numLeds);
+	Serial.println(numLedPeek);
 
-	//Serial.println(numLedPeek);
+	if (numLedPeek >= config.numLeds) { numLedPeek = config.numLeds; };
 
 
 	if (maxPeekVal >= config.sensitivity)
@@ -290,7 +284,7 @@ void equalizerM()
 	}
 	for (uint8_t i = numLedPeek; i < config.numLeds; i++)
 	{
-		leds[i].fadeToBlackBy(20);
+		leds[i].fadeToBlackBy(13);
 	}
 	FastLED.show();
 	wheelPos++;
